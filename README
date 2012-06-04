@@ -102,5 +102,6 @@ MESSAGE_END
   end
 end 
 
+puts "hi"
 
 
