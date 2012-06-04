@@ -1,0 +1,104 @@
+#Rachel Burkhoff
+#W1L02
+#Secret Santa Game
+#Takes in a list of names and emails and 
+#randomly assigns you a secret santa
+#avoiding anyone with the same last name as matches
+#sends email to everyone informing them on their match 
+
+
+#Person class contains first and last name, email address, and match 
+class Person
+  attr_reader :Fname, :Lname, :email, :match
+  def initialize(first, second, ea)
+    @Fname = first
+    @Lname = second
+    @email = ea
+    @match = nil 
+  end 
+  def setMatch(name)
+    @match= name 
+
+  end
+
+  def getMatch
+    return match 
+  end
+end
+
+puts "insert file name:"
+STDOUT.flush
+file = File.open(gets.chomp, "r") 
+
+startList = [] #start list 
+endList = [] #end list
+
+#read input file of names and email address and adds to an array each Person
+file.each_line do |l|
+  startList.push[Person.new(l, l.split, l.split)]
+end
+startList2 = startList.dup #makes a copy of the list 
+
+flag=true
+firstPerson = startList [0] #gets first person in the list 
+
+
+#random accesing of matches for secret santa 
+while flag 
+  flag = false
+  person1=startList[0]
+  while startList.length > 1
+    #finding a good match for the person until they don't have the same last name 
+    goodMatch = true 
+
+    #trys to find a good match based on if last names are the same
+    while goodMatch
+      goodMatch = false
+      matchFound = startList[rand(startList.length)] #gets a random name
+      person1.setMatch(matchFound) 
+      #checks if same last name 
+      if matchFound.Lname == person1.Lname 
+        goodMatch = true
+      end 
+    end 
+    
+    indexP = startList.index(person1) #gets index of the person being matched
+    endList.push person1 #adds that person to new list 
+    person1= matchFound #changes the person who needs to find a match to the person who was matched to the last person 
+    startList.delete_at(indexP) #removes the person from the startArray 
+  end 
+  
+  #to set the last person in the game equal to the first person you started with
+  #if their last names are the same you need to start again
+  if person1.Lname == firstPerson.Lname
+    flag =true
+    startList = startList2.dup # rerests the values in the original array using the copied list from earlier 
+  else 
+    person1.setMatch(firstPerson)
+    endList.push person1
+  end
+end 
+
+#send out emails for each person 
+i=0
+require 'net/smtp'
+  while i<endList.length
+    Net::SMTP.start(
+      'localhost',
+      )
+    message = <<MESSAGE_END
+      From: <rachelburkhoff@gmail.com>
+      To: #{endList[i].email}
+      Subject: Your Secret Santa gift responsibility! 
+
+      Dear #{endList[i].Fname} #{endList[i].Lname}. This year you must 
+      buy a gift for #{endList[i].getMatch.Fname} #{endList[i].getMatch.Lname}.
+      Merry Christmas and Happy Channukah!
+MESSAGE_END
+
+    Net::SMTP.start('localhost') do |smtp|
+    smtp.send_message message, 'rachelburkhoff@gmail.com'
+    i = i+1
+  end
+end 
+
